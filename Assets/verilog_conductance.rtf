@@ -1,0 +1,53 @@
+{\rtf1\ansi\ansicpg949\cocoartf2761
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 `include "discipline.h"\
+`include "constants.h"\
+\
+module pulse_controller(pulse, voltage, gnd);\
+  electrical pulse, voltage, gnd;\
+\
+  // \uc0\u54028 \u46972 \u48120 \u53552  \u49444 \u51221 \
+  parameter real target_conductance = 0.5; // \uc0\u47785 \u54364  \u52968 \u45909 \u53556 \u49828  \u44050  (S)\
+  parameter real pulse_voltage = 1.3;      // \uc0\u51064 \u44032 \u54616 \u45716  \u51204 \u50517  (V)\
+  parameter real toggle_period = 1;        // \uc0\u54148 \u49828  \u53664 \u44544  \u51452 \u44592  (s)\
+  parameter real tolerance = 0.01;         // \uc0\u52968 \u45909 \u53556 \u49828  \u54728 \u50857  \u50724 \u52264  \u48276 \u50948 \
+\
+  real current_conductance;\
+  real current_time;\
+  integer toggle_state;\
+\
+  analog begin\
+    @(initial_step) begin\
+      toggle_state = 0; // \uc0\u52488 \u44592  \u49345 \u53468 \u45716  \u51204 \u50517  Off\
+      current_time = 0;\
+    end\
+\
+    // \uc0\u49884 \u44036  \u44592 \u48152 \u51004 \u47196  \u54148 \u49828  \u53664 \u44544 \
+    current_time = $abstime;\
+    if (current_time >= toggle_period) begin\
+      current_time = 0;\
+      toggle_state = !toggle_state; // \uc0\u49345 \u53468  \u53664 \u44544 \
+    end\
+\
+    // \uc0\u51204 \u50517  \u54148 \u49828  \u51064 \u44032 : \u53664 \u44544  \u49345 \u53468 \u50640  \u46384 \u46972  On/Off\
+    if (toggle_state) begin\
+      V(voltage, gnd) <+ pulse_voltage;\
+    end else begin\
+      V(voltage, gnd) <+ 0;\
+    end\
+\
+    // \uc0\u54788 \u51116  \u54924 \u47196 \u51032  \u52968 \u45909 \u53556 \u49828  \u44050  \u52769 \u51221 \
+    current_conductance = I(pulse, gnd) / V(voltage, gnd);\
+\
+    // \uc0\u52968 \u45909 \u53556 \u49828  \u44050 \u51060  \u47785 \u54364 \u50640  \u46020 \u45804 \u54616 \u47732  \u54148 \u49828 \u47484  \u47688 \u52644 \
+    if (current_conductance >= target_conductance - tolerance) begin\
+      toggle_state = 0; // \uc0\u51204 \u50517  \u54148 \u49828  Off\
+    end\
+  end\
+endmodule\
+}
